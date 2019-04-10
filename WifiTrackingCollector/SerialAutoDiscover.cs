@@ -10,7 +10,7 @@ namespace WifiTrackingCollector
         List<string> ports;
         SerialPort autoDiscoverPort;
 
-        public List<string> GetAvailablePortsAndSetAutoDiscover()
+        public List<string> GetAvailablePortsAndAutoDiscover()
         {
             ports = new List<string>();
             foreach (string portName in SerialPort.GetPortNames())
@@ -37,12 +37,9 @@ namespace WifiTrackingCollector
 
         private void SerialPortAutoDiscover(object sender, SerialDataReceivedEventArgs e)
         {
-            //SerialPort currentPort = (SerialPort)sender;
             string data = autoDiscoverPort.ReadExisting();
-            //System.Threading.Thread.Sleep(5000);
             try
             {
-                //data = data.Substring(data.IndexOf("\r\n"));
                 data = data.Substring(data.IndexOf('#') + 1, data.IndexOf('$') - data.IndexOf('#') - 1);
             }
             catch (Exception)

@@ -7,7 +7,6 @@ namespace WifiTrackingCollector
     class SerialInformation
     {
         SerialPort serialPort;
-        public List<string> MacList { get; set; }
 
         public void ReadFromPort(string port)
         {
