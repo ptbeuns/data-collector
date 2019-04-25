@@ -2,7 +2,7 @@
 using System.IO.Ports;
 using System.Collections.Generic;
 
-namespace WifiTrackingCollector
+namespace DataCollector
 {
     class SerialInformation
     {

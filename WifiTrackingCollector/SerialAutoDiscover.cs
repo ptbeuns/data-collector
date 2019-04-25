@@ -2,23 +2,28 @@
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
-namespace WifiTrackingCollector
+namespace DataCollector
 {
     class SerialAutoDiscover
     {
-        List<string> ports;
-        SerialPort autoDiscoverPort;
+        private Dictionary<string, int> trackers;
+        private SerialPort autoDiscoverPort;
 
-        public List<string> GetAvailablePortsAndAutoDiscover()
+        public Dictionary<string, int> GetAvailablePortsAndAutoDiscover()
         {
-            ports = new List<string>();
+            trackers = new Dictionary<string, int>();
             foreach (string portName in SerialPort.GetPortNames())
             {
-                autoDiscoverPort = new SerialPort(portName, 115200, Parity.None, 8);
                 try
                 {
-                    autoDiscoverPort.StopBits = StopBits.One;
+                    autoDiscoverPort = new SerialPort(portName, 115200, Parity.None, 8)
+                    {
+                        StopBits = StopBits.One,
+                        WriteTimeout = 1000,
+                        ReadTimeout = 3000 
+                    };
                     autoDiscoverPort.DataReceived += SerialPortAutoDiscover;
                     autoDiscoverPort.Open();
                     autoDiscoverPort.WriteLine("#DISCOVERY$");
@@ -26,33 +31,43 @@ namespace WifiTrackingCollector
                 catch (UnauthorizedAccessException)
                 {
                     Console.WriteLine("Unauthorized port or port already in use.");
+                    autoDiscoverPort.Close();
                 }
+                catch (System.IO.IOException)
+                {
+                    autoDiscoverPort.Close();
+                }
+                catch(TimeoutException)
+                {
+                    autoDiscoverPort.Close();
+                }
+                
                 while (autoDiscoverPort.IsOpen)
                 {
-                    //Nothing
+                    //Timer -- protocol timeout
+                    Console.WriteLine("COM");
                 }
             }
-            return ports;
+            return trackers;
         }
 
         private void SerialPortAutoDiscover(object sender, SerialDataReceivedEventArgs e)
-        {
+        {  
+            int nodeid = 0;
+            //try catch serial disconnected/notfound
             string data = autoDiscoverPort.ReadExisting();
-            try
+            if (data.Contains("#NodeMcu:") && data.Contains('$'))
             {
-                data = data.Substring(data.IndexOf('#') + 1, data.IndexOf('$') - data.IndexOf('#') - 1);
-            }
-            catch (Exception)
-            {
-
-               // throw;
+                data = data.Substring(data.IndexOf(':') + 1, data.IndexOf('$') - data.IndexOf(':') - 1);
+                int.TryParse(data, out nodeid);
+                Console.WriteLine(data);
             }
 
-            if (data == "NodeMcu")
+            if (nodeid != 0)
             {
                 Console.WriteLine("nodemcu");
                 autoDiscoverPort.Write("#ACK$");
-                ports.Add(autoDiscoverPort.PortName);
+                trackers.Add(autoDiscoverPort.PortName, nodeid);
                 System.Threading.Thread.Sleep(500);
                 autoDiscoverPort.Close();
                 autoDiscoverPort.Dispose();

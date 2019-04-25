@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
+using Newtonsoft.Json;
 
-namespace WifiTrackingCollector
+namespace DataCollector
 {
     class Train
     {
@@ -17,14 +19,31 @@ namespace WifiTrackingCollector
             Coupes = new List<Coupe>();
         }
 
-        public void ReadConfigAndSetSettings()
-        {
-
-        }
-
         public override string ToString()
         {
             return base.ToString();
+        }
+
+        public void AutoDiscoverWiFiTrackers()
+        {
+            SerialAutoDiscover autoDiscover = new SerialAutoDiscover();
+            Dictionary<string, int> x = autoDiscover.GetAvailablePortsAndAutoDiscover();
+            foreach (KeyValuePair<string, int> comPort in x)
+            {
+                foreach (Coupe coupe in Coupes)
+                {
+                    foreach (WiFiTracker wiFiTracker in coupe.WiFiTrackers)
+                    {
+                        if (wiFiTracker.TrackerID == comPort.Value)
+                        {
+                            Console.WriteLine(wiFiTracker.ComPort);
+
+                            wiFiTracker.ComPort = comPort.Key;
+                            Console.WriteLine(wiFiTracker.ComPort);
+                        }
+                    }
+                }
+            }
         }
     }
 }
