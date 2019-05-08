@@ -18,30 +18,40 @@ namespace DataCollector
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
             //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("145.93.34.34"), 4337);
             while (true)
             {
                 switch (socketState)
                 {
                     case SocketState.Initialize:
+                        Console.WriteLine("init");
                         if (s.Socket == null)
                         {
                             s.ConnectSocket();
-                            s.SendMessage("CONNECT:TRAIN");
-                            socketState = SocketState.Identifying;
+                            if (s.SendMessage("CONNECT:TRAIN"))
+                            {
+                                socketState = SocketState.Identifying;
+                            }
                         }
                         break;
                     case SocketState.Identifying:
-                        s.ReceiveMessage();
-                        if (s.Message == "ACK")
+                        if(s.ReceiveMessage())
                         {
-                            s.SendMessage("IAM:" + train.RideNr);
-                            socketState = SocketState.AwaitAck;
+                            if (s.Message == "ACK")
+                            {
+                                s.SendMessage("IAM:" + train.RideNr);
+                                socketState = SocketState.AwaitAck;
+                            }
+                            else if (s.Message == "NACK")
+                            {
+                                socketState = SocketState.Initialize;
+                            }
                         }
-                        else if (s.Message == "NACK")
+                        else
                         {
                             socketState = SocketState.Initialize;
                         }
+                        
                         break;
                     case SocketState.AwaitAck:
                         s.ReceiveMessage();
@@ -57,6 +67,12 @@ namespace DataCollector
                     case SocketState.MainLoop:
                         //Foreach coupe;
                         //Foreach wifitracker
+                        //Temp:
+                        while (s.Socket.IsBound)
+                        {
+                            System.Threading.Thread.Sleep(5000);
+                            s.SendMessage("OCCUPATION:" + train.TrainUnitNr + ",30,40,30");
+                        }
                         break;
                     default:
                         break;

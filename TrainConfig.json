@@ -1,0 +1,20 @@
+{
+  "RideNr": 3933,
+  "TrainUnitNr": 9596,
+  "Coupes": [
+    {
+      "CoupeNr": 1,
+      "WiFiTrackers": [
+        7725891,
+        7000000
+      ]
+    },
+    {
+      "CoupeNr": 2,
+      "WiFiTrackers": [
+        5843812,
+        5000000
+      ]
+    }
+  ]
+}

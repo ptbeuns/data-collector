@@ -33,6 +33,10 @@ namespace DataCollector
         {
             Serial.Write("#COLLECT$");
             serialState = SerialState.Collecting;
+            while (serialState == SerialState.Collecting)
+            {
+                //Nothing :(
+            }
         }
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -58,14 +62,16 @@ namespace DataCollector
             //{
             //    // throw;
             //}
-
+            
             switch (serialState)
             {
                 case SerialState.Idle:
                     break;
                 case SerialState.Collecting:
+                    //Wait for done message
                     break;
                 case SerialState.Receiving:
+                    //Wait
                     break;
                 default:
                     break;

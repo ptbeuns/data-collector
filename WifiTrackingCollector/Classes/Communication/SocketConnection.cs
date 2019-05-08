@@ -58,13 +58,20 @@ namespace DataCollector
         {
             if (Socket != null)
             {
-                if (Socket.Connected)
+                try
                 {
-                    byte[] message = Encoding.ASCII.GetBytes(MessageParser.Encode(msg));
-                    int bytesSent = Socket.Send(message);
-                    return true;
+                    if (Socket.Poll(1000, SelectMode.SelectWrite))
+                    {
+                        byte[] message = Encoding.ASCII.GetBytes(MessageParser.Encode(msg));
+                        int bytesSent = Socket.Send(message);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
-                else
+                catch (SocketException)
                 {
                     return false;
                 }
@@ -75,7 +82,7 @@ namespace DataCollector
             }
         }
 
-        public string ReceiveMessage()
+        public bool ReceiveMessage()
         {
             if (Socket != null)
             {
@@ -83,13 +90,16 @@ namespace DataCollector
                 {
                     int bytesRec = Socket.Receive(bytes);
                     Message = MessageParser.Parse(Encoding.ASCII.GetString(bytes, 0, bytesRec));
-                    return Message;
+                    return true;
                 }
-                else return null;
+                else
+                {
+                    return false;
+                }
             }
             else
             {
-                return null;
+                return false;
             }
 
         }
