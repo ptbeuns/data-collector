@@ -24,7 +24,7 @@ namespace DataCollector
                 switch (socketState)
                 {
                     case SocketState.Initialize:
-                        Console.WriteLine("init");
+                        //Console.WriteLine("init");
                         if (s.Socket == null)
                         {
                             s.ConnectSocket();
