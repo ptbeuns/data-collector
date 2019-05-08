@@ -68,11 +68,13 @@ namespace DataCollector
                     }
                     else
                     {
+                        Console.WriteLine("sendmessageellse");
                         return false;
                     }
                 }
                 catch (SocketException)
                 {
+                    Console.WriteLine("Socketexceptie");
                     return false;
                 }
             }

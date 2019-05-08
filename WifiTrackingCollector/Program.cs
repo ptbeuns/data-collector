@@ -18,25 +18,29 @@ namespace DataCollector
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
             //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("145.93.34.34"), 4337);
             while (true)
             {
                 switch (socketState)
                 {
                     case SocketState.Initialize:
-                        //Console.WriteLine("init");
                         if (s.Socket == null)
                         {
                             s.ConnectSocket();
                             if (s.SendMessage("CONNECT:TRAIN"))
                             {
+                                Console.WriteLine("inityeet");
                                 socketState = SocketState.Identifying;
                             }
+                            Console.WriteLine("kutinit");
                         }
                         break;
                     case SocketState.Identifying:
+                        Console.WriteLine("Identifyinggg");
                         if(s.ReceiveMessage())
                         {
+                            Console.WriteLine(s.Message);
+                            Console.WriteLine("yeet1");
                             if (s.Message == "ACK")
                             {
                                 s.SendMessage("IAM:" + train.RideNr);
@@ -46,10 +50,6 @@ namespace DataCollector
                             {
                                 socketState = SocketState.Initialize;
                             }
-                        }
-                        else
-                        {
-                            socketState = SocketState.Initialize;
                         }
                         
                         break;
