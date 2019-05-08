@@ -10,6 +10,8 @@ namespace DataCollector
     {
         private Dictionary<string, int> trackers;
         private SerialPort autoDiscoverPort;
+        private Stopwatch stopWatch;
+
 
         public Dictionary<string, int> GetAvailablePortsAndAutoDiscover()
         {
@@ -22,37 +24,40 @@ namespace DataCollector
                     {
                         StopBits = StopBits.One,
                         WriteTimeout = 1000,
-                        ReadTimeout = 3000 
+                        ReadTimeout = 3000
                     };
+                    stopWatch = new Stopwatch();
+                    stopWatch.Start();
                     autoDiscoverPort.DataReceived += SerialPortAutoDiscover;
                     autoDiscoverPort.Open();
                     autoDiscoverPort.WriteLine("#DISCOVERY$");
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    Console.WriteLine("Unauthorized port or port already in use.");
                     autoDiscoverPort.Close();
                 }
                 catch (System.IO.IOException)
                 {
                     autoDiscoverPort.Close();
                 }
-                catch(TimeoutException)
+                catch (TimeoutException)
                 {
                     autoDiscoverPort.Close();
                 }
-                
+
                 while (autoDiscoverPort.IsOpen)
                 {
-                    //Timer -- protocol timeout
-                    Console.WriteLine("COM");
+                    if (stopWatch.ElapsedMilliseconds >= 3000)
+                    {
+                        autoDiscoverPort.Close();
+                    }
                 }
             }
             return trackers;
         }
 
         private void SerialPortAutoDiscover(object sender, SerialDataReceivedEventArgs e)
-        {  
+        {
             int nodeid = 0;
             //try catch serial disconnected/notfound
             string data = autoDiscoverPort.ReadExisting();
@@ -68,9 +73,7 @@ namespace DataCollector
                 Console.WriteLine("nodemcu");
                 autoDiscoverPort.Write("#ACK$");
                 trackers.Add(autoDiscoverPort.PortName, nodeid);
-                System.Threading.Thread.Sleep(500);
                 autoDiscoverPort.Close();
-                autoDiscoverPort.Dispose();
             }
         }
     }

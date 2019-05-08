@@ -29,7 +29,11 @@ namespace DataCollector
 
         public void CollectCrowd()
         {
-
+            foreach (WiFiTracker wiFiTracker in WiFiTrackers)
+            {
+                wiFiTracker.Collect();
+            }
+            //Foreach I2C slave (stoelensysteem)
         }
 
         public override string ToString()

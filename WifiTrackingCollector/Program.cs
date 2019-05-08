@@ -3,34 +3,88 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.IO;
+using System.Net;
 
 namespace DataCollector
 {
     class Program
     {
         static public List<string> WifiTrackers { get; private set; }
-        static private string configFile = AppDomain.CurrentDomain.BaseDirectory + @"\TrainConfig.json";
+        private static readonly string configFile = AppDomain.CurrentDomain.BaseDirectory + @"\TrainConfig.json";
+        private static Train train;
+        private static SocketState socketState;
         static void Main(string[] args)
-        { 
-            Console.WriteLine("Application startup");
-            //SerialAutoDiscover ad = new SerialAutoDiscover();
-            //WifiTrackers = ad.GetAvailablePortsAndAutoDiscover();
-            //Temp:
+        {
+            ReadConfig();
+            train.AutoDiscoverWiFiTrackers();
+            //Console.WriteLine(train.Coupes[0].CoupeNr);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
+            while (true)
+            {
+                switch (socketState)
+                {
+                    case SocketState.Initialize:
+                        if (s.Socket == null)
+                        {
+                            s.ConnectSocket();
+                            s.SendMessage("CONNECT:TRAIN");
+                            socketState = SocketState.Identifying;
+                        }
+                        break;
+                    case SocketState.Identifying:
+                        s.ReceiveMessage();
+                        if (s.Message == "ACK")
+                        {
+                            s.SendMessage("IAM:" + train.RideNr);
+                            socketState = SocketState.AwaitAck;
+                        }
+                        else if (s.Message == "NACK")
+                        {
+                            socketState = SocketState.Initialize;
+                        }
+                        break;
+                    case SocketState.AwaitAck:
+                        s.ReceiveMessage();
+                        if (s.Message == "ACK")
+                        {
+                            socketState = SocketState.MainLoop;
+                        }
+                        else if (s.Message == "NACK")
+                        {
+                            socketState = SocketState.Identifying;
+                        }
+                        break;
+                    case SocketState.MainLoop:
+                        //Foreach coupe;
+                        //Foreach wifitracker
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private static void ReadConfig()
+        {
             if (!File.Exists(configFile))
             {
                 Console.WriteLine("Train config file not found!");
                 System.Threading.Thread.Sleep(3000);
                 Environment.Exit(0);
             }
-            Console.WriteLine(AppDomain.CurrentDomain.BaseDirectory);
-            //string config = @"{'RideNr':3933,'TrainUnitNr': 9596,'Coupes':[{'CoupeNr': 1, 'WiFiTrackers':[7725891, 7834854]},{ 'CoupeNr': 2, 'WiFiTrackers':[5495043, 5904544]}]}";
-            //Train train = JsonConvert.DeserializeObject<Train>(config);
-            Train train = JsonConvert.DeserializeObject<Train>(File.ReadAllText(configFile));
-            train.AutoDiscoverWiFiTrackers();
-            Console.WriteLine(train.Coupes[0].WiFiTrackers[0].TrackerID);
-            Console.WriteLine(train.Coupes[0].WiFiTrackers[1].TrackerID);
+            Console.WriteLine("Reading config file from: " + configFile);
+            train = JsonConvert.DeserializeObject<Train>(File.ReadAllText(configFile));
+            //TODO server ip + port via config
+        }
 
-            Console.ReadLine();
+        //Temp:
+        private static void ShowCoupeInfo()
+        {
+            Console.WriteLine(train.Coupes[0].WiFiTrackers[0].TrackerID + "" + train.Coupes[0].WiFiTrackers[0].ComPort);
+            Console.WriteLine(train.Coupes[0].WiFiTrackers[1].TrackerID + "" + train.Coupes[0].WiFiTrackers[1].ComPort);
+
+            Console.WriteLine(train.Coupes[1].WiFiTrackers[0].TrackerID + "" + train.Coupes[1].WiFiTrackers[0].ComPort);
+            Console.WriteLine(train.Coupes[1].WiFiTrackers[1].TrackerID + "" + train.Coupes[1].WiFiTrackers[1].ComPort);
         }
     }
 }

@@ -40,21 +40,24 @@ namespace DataCollector
             string data = Serial.ReadExisting();
             if (data.Contains('#') && data.Contains('$'))
             {
-
-            }
-
-            try
-            {
-                if (data.Contains("ACK"))
+                if (data.Contains("#HEARTBEAT$"))
                 {
-                    data = data.Substring(5);
+                    Serial.Write("#ACK$");
                 }
-                data = data.Substring(data.IndexOf('#') + 1, data.IndexOf('$') - data.IndexOf('#') - 1);
             }
-            catch (Exception)
-            {
-                // throw;
-            }
+
+            //try
+            //{
+            //    if (data.Contains("ACK"))
+            //    {
+            //        data = data.Substring(5);
+            //    }
+            //    data = data.Substring(data.IndexOf('#') + 1, data.IndexOf('$') - data.IndexOf('#') - 1);
+            //}
+            //catch (Exception)
+            //{
+            //    // throw;
+            //}
 
             switch (serialState)
             {
