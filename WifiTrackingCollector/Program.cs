@@ -85,6 +85,7 @@ namespace DataCollector
             if (!File.Exists(configFile))
             {
                 Console.WriteLine("Train config file not found!");
+                Console.WriteLine(configFile);
                 System.Threading.Thread.Sleep(3000);
                 Environment.Exit(0);
             }
