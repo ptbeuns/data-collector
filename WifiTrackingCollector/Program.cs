@@ -10,7 +10,7 @@ namespace DataCollector
     class Program
     {
         static public List<string> WifiTrackers { get; private set; }
-        private static readonly string configFile = AppDomain.CurrentDomain.BaseDirectory + @"TrainConfig.json";
+        private static readonly string configFile = @"TrainConfig.json";
         private static Train train;
         private static SocketState socketState;
         static void Main(string[] args)
