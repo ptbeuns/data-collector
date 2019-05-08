@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.IO.Ports;
+//using System.IO.Ports;
+using RJCP.IO.Ports;
 
 namespace DataCollector
 {
@@ -9,7 +10,7 @@ namespace DataCollector
     {
         public int TrackerID { get; private set; }
         public string ComPort { get; set; }
-        public SerialPort Serial { get; private set; }
+        public SerialPortStream Serial { get; private set; }
         private SerialState serialState;
 
         public WiFiTracker(int trackerID)
@@ -23,7 +24,7 @@ namespace DataCollector
         {
             if(ComPort != null)
             {
-                Serial = new SerialPort(ComPort, 115200, Parity.None, 8);
+                Serial = new SerialPortStream(ComPort, 115200, 8, Parity.None, StopBits.One);
                 Serial.DataReceived += SerialPortDataReceived;
                 Serial.Open();
             }

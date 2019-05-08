@@ -1,16 +1,17 @@
 ﻿using System;
-using System.IO.Ports;
+//using System.IO.Ports;
+using RJCP.IO.Ports;
 using System.Collections.Generic;
 
 namespace DataCollector
 {
     class SerialInformation
     {
-        SerialPort serialPort;
+        SerialPortStream serialPort;
 
         public void ReadFromPort(string port)
         {
-            serialPort = new SerialPort(port, 115200, Parity.None, 8);
+            serialPort = new SerialPortStream(port, 115200, 8, Parity.None, StopBits.One);
             serialPort.DataReceived += SerialPortDataReceived;
             for (int i = 0; i < 3; i++)
             {

@@ -1,26 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Ports;
+//using System.IO.Ports;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using RJCP.IO.Ports;
 
 namespace DataCollector
 {
     class SerialAutoDiscover
     {
         private Dictionary<string, int> trackers;
-        private SerialPort autoDiscoverPort;
+        private SerialPortStream autoDiscoverPort;
         private Stopwatch stopWatch;
 
 
         public Dictionary<string, int> GetAvailablePortsAndAutoDiscover()
         {
             trackers = new Dictionary<string, int>();
-            foreach (string portName in SerialPort.GetPortNames())
+            foreach (string portName in SerialPortStream.GetPortNames())
             {
                 try
                 {
-                    autoDiscoverPort = new SerialPort(portName, 115200, Parity.None, 8)
+                    autoDiscoverPort = new SerialPortStream(portName, 115200, 8, Parity.None, StopBits.One)
                     {
                         StopBits = StopBits.One,
                         WriteTimeout = 1000,
