@@ -43,11 +43,12 @@ namespace DataCollector
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             string data = Serial.ReadExisting();
+            data = SerialMessageParser.Parse(data);
             if (data.Contains('#') && data.Contains('$'))
             {
                 if (data.Contains("#HEARTBEAT$"))
                 {
-                    Serial.Write("#ACK$");
+                    Serial.Write(SerialMessageParser.Encode("ACK"));
                 }
             }
 
@@ -70,9 +71,13 @@ namespace DataCollector
                     break;
                 case SerialState.Collecting:
                     //Wait for done message
+                    //Split and save count
+                    
+
                     break;
                 case SerialState.Receiving:
-                    //Wait
+                    //Wait for #MAC:xx:xx:xx:xx:xx$ and ACK
+                    //If finish, check count
                     break;
                 default:
                     break;

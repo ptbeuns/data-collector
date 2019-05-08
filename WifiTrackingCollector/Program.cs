@@ -18,7 +18,7 @@ namespace DataCollector
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
             //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("145.93.34.34"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
             while (true)
             {
                 switch (socketState)
@@ -29,18 +29,13 @@ namespace DataCollector
                             s.ConnectSocket();
                             if (s.SendMessage("CONNECT:TRAIN"))
                             {
-                                Console.WriteLine("inityeet");
                                 socketState = SocketState.Identifying;
                             }
-                            Console.WriteLine("kutinit");
                         }
                         break;
                     case SocketState.Identifying:
-                        Console.WriteLine("Identifyinggg");
                         if(s.ReceiveMessage())
                         {
-                            Console.WriteLine(s.Message);
-                            Console.WriteLine("yeet1");
                             if (s.Message == "ACK")
                             {
                                 s.SendMessage("IAM:" + train.RideNr);
@@ -67,7 +62,12 @@ namespace DataCollector
                     case SocketState.MainLoop:
                         //Foreach coupe;
                         //Foreach wifitracker
-                        //Temp:
+                        //foreach (Coupe coupe in train.Coupes)
+                        //{
+                        //    coupe.CollectCrowd();
+                        //}
+
+                        //Temp (voor demo?):
                         while (s.Socket.IsBound)
                         {
                             System.Threading.Thread.Sleep(5000);

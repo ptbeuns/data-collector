@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.IO.Ports;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using RJCP.IO.Ports;
 
@@ -31,7 +29,7 @@ namespace DataCollector
                     stopWatch.Start();
                     autoDiscoverPort.DataReceived += SerialPortAutoDiscover;
                     autoDiscoverPort.Open();
-                    autoDiscoverPort.WriteLine("#DISCOVERY$");
+                    autoDiscoverPort.WriteLine(SerialMessageParser.Encode("DISCOVERY"));
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -60,19 +58,19 @@ namespace DataCollector
         private void SerialPortAutoDiscover(object sender, SerialDataReceivedEventArgs e)
         {
             int nodeid = 0;
-            //try catch serial disconnected/notfound
+            //TODO try catch serial disconnected/notfound
             string data = autoDiscoverPort.ReadExisting();
-            if (data.Contains("#NodeMcu:") && data.Contains('$'))
+            if (SerialMessageParser.Parse(data).StartsWith("NodeMcu"))
             {
-                data = data.Substring(data.IndexOf(':') + 1, data.IndexOf('$') - data.IndexOf(':') - 1);
-                int.TryParse(data, out nodeid);
+                data = SerialMessageParser.Parse(data);
+                int.TryParse(SerialMessageParser.GetValue(data), out nodeid);
                 Console.WriteLine(data);
             }
 
             if (nodeid != 0)
             {
-                Console.WriteLine("nodemcu");
-                autoDiscoverPort.Write("#ACK$");
+                Console.WriteLine("NodeMCU found");
+                autoDiscoverPort.Write(SerialMessageParser.Encode("ACK"));
                 trackers.Add(autoDiscoverPort.PortName, nodeid);
                 autoDiscoverPort.Close();
             }
