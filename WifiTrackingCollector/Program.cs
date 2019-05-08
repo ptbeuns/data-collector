@@ -18,7 +18,7 @@ namespace DataCollector
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
             //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("145.93.34.34"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
             while (true)
             {
                 switch (socketState)
