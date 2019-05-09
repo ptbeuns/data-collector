@@ -18,7 +18,7 @@ namespace DataCollector
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
             //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("192.168.1.40"), 4337);
             while (true)
             {
                 switch (socketState)
@@ -62,6 +62,7 @@ namespace DataCollector
                     case SocketState.MainLoop:
                         //Foreach coupe;
                         //Foreach wifitracker
+                        //Console.WriteLine("YEET");
                         //foreach (Coupe coupe in train.Coupes)
                         //{
                         //    coupe.CollectCrowd();

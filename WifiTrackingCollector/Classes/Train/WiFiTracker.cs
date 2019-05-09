@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-//using System.IO.Ports;
+using System.Net.NetworkInformation;
 using RJCP.IO.Ports;
 
 namespace DataCollector
@@ -12,87 +12,98 @@ namespace DataCollector
         public string ComPort { get; set; }
         public SerialPortStream Serial { get; private set; }
         private SerialState serialState;
+        private int countMacsForReceive;
+        private List<PhysicalAddress> macList;
 
         public WiFiTracker(int trackerID)
         {
             TrackerID = trackerID;
             ComPort = null;
             Serial = null;
+
+            serialState = SerialState.Idle;
+            countMacsForReceive = 0;
+            macList = new List<PhysicalAddress>();
         }
 
         public void StartSerialConnection()
         {
-            if(ComPort != null)
+            if (ComPort != null)
             {
-                Serial = new SerialPortStream(ComPort, 115200, 8, Parity.None, StopBits.One);
+                Serial = new SerialPortStream(ComPort, 115200, 8, Parity.None, StopBits.One)
+                {
+                    StopBits = StopBits.One,
+                    WriteTimeout = 1000,
+                    ReadTimeout = 3000
+                };
                 Serial.DataReceived += SerialPortDataReceived;
                 Serial.Open();
+                Serial.WriteLine(SerialMessageParser.Encode("DISCOVERY"));
+                //Werkt iets niet 
             }
         }
 
-        public void Collect()
+        public List<PhysicalAddress> Collect()
         {
-            Serial.Write("#COLLECT$");
+            //Check if serial isopen
+            Serial.Write(SerialMessageParser.Encode("COLLECT"));
             serialState = SerialState.Collecting;
-            while (serialState == SerialState.Collecting)
+            while (serialState == SerialState.Collecting || serialState == SerialState.Receiving)
             {
-                //Nothing :(
+                Console.WriteLine(Serial.IsOpen);
             }
+            return macList;
         }
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             string data = Serial.ReadExisting();
             data = SerialMessageParser.Parse(data);
-            if (data.Contains('#') && data.Contains('$'))
+            if (data == "HARTBEAT")
             {
-                if (data.Contains("#HEARTBEAT$"))
-                {
-                    Serial.Write(SerialMessageParser.Encode("ACK"));
-                }
+                Serial.Write(SerialMessageParser.Encode("ACK"));
+            }
+            else if (data.StartsWith("NodeMcu"))
+            {
+                SerialMessageParser.Encode("ACK");
             }
 
-            //try
-            //{
-            //    if (data.Contains("ACK"))
-            //    {
-            //        data = data.Substring(5);
-            //    }
-            //    data = data.Substring(data.IndexOf('#') + 1, data.IndexOf('$') - data.IndexOf('#') - 1);
-            //}
-            //catch (Exception)
-            //{
-            //    // throw;
-            //}
-            
             switch (serialState)
             {
                 case SerialState.Idle:
                     break;
                 case SerialState.Collecting:
-                    //Wait for done message
-                    //Split and save count
-                    
-
+                    Console.WriteLine("Collecting");
+                    if (data.StartsWith("DONE:"))
+                    {
+                        Int32.TryParse(SerialMessageParser.GetValue(data), out countMacsForReceive);
+                        Serial.Write(SerialMessageParser.Encode("SEND"));
+                        serialState = SerialState.Receiving;
+                    }
                     break;
                 case SerialState.Receiving:
-                    //Wait for #MAC:xx:xx:xx:xx:xx$ and ACK
-                    //If finish, check count
+                    Console.WriteLine("Receiving");
+                    if (data.StartsWith("MAC:"))
+                    {
+                        try
+                        {
+                            macList.Add(PhysicalAddress.Parse(SerialMessageParser.GetValue(data)));
+                            Serial.Write(SerialMessageParser.Encode("ACK"));
+                        }
+                        catch (FormatException)
+                        {
+                            Serial.Write(SerialMessageParser.Encode("NACK"));
+                        }
+                    }
+                    else if (data == "FINSIH")
+                    {
+                        //TODO check macList.Count == countMacsForReceive (not in WiFiTracker yet)
+                        serialState = SerialState.Idle;
+                    }
                     break;
                 default:
                     break;
             }
-            
-
-            if (data.StartsWith("DONE:"))
-            {
-                Serial.Write("#SEND$");
-            }
-            else if (data.StartsWith("MAC:"))
-            {
-                Serial.WriteLine("#ACK$");
-            }
-            Console.WriteLine(data);
         }
 
         public override string ToString()

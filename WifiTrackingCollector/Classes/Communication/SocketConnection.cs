@@ -68,7 +68,6 @@ namespace DataCollector
                     }
                     else
                     {
-                        Console.WriteLine("sendmessageellse");
                         return false;
                     }
                 }

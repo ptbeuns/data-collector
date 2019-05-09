@@ -31,7 +31,13 @@ namespace DataCollector
         {
             foreach (WiFiTracker wiFiTracker in WiFiTrackers)
             {
-                wiFiTracker.Collect();
+                wiFiTracker.StartSerialConnection();
+                MacAddresses.AddRange(wiFiTracker.Collect());
+            }
+
+            foreach (PhysicalAddress mac in MacAddresses)
+            {
+                Console.WriteLine(mac.ToString());
             }
             //Foreach I2C slave (stoelensysteem)
         }
