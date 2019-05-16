@@ -51,6 +51,7 @@ namespace DataCollector
                         autoDiscoverPort.Close();
                     }
                 }
+                autoDiscoverPort.Dispose();
             }
             return trackers;
         }
@@ -74,6 +75,7 @@ namespace DataCollector
                 trackers.Add(autoDiscoverPort.PortName, nodeid);
                 autoDiscoverPort.Close();
             }
+            Console.WriteLine("yeet");
         }
     }
 }

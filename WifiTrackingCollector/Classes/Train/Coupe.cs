@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Net.NetworkInformation;
+using System.Linq;
 
 namespace DataCollector
 {
@@ -29,16 +30,21 @@ namespace DataCollector
 
         public void CollectCrowd()
         {
+            UniqueMacCount = 0;
+            ChairsOccupied = 0;
+            MacAddresses.Clear();
             foreach (WiFiTracker wiFiTracker in WiFiTrackers)
             {
-                wiFiTracker.StartSerialConnection();
-                MacAddresses.AddRange(wiFiTracker.Collect());
+                if (wiFiTracker.ComPort != null && wiFiTracker.ComPort != "")
+                {
+                    MacAddresses.AddRange(wiFiTracker.Collect());
+                }
             }
-
-            foreach (PhysicalAddress mac in MacAddresses)
-            {
-                Console.WriteLine(mac.ToString());
-            }
+            UniqueMacCount = (from x in MacAddresses select x).Distinct().Count();
+            //foreach (PhysicalAddress mac in MacAddresses)
+            //{
+            //    Console.WriteLine(mac.ToString());
+            //}
             //Foreach I2C slave (stoelensysteem)
         }
 

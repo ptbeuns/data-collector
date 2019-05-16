@@ -7,6 +7,7 @@ namespace DataCollector
     public enum SerialState
     {
         Idle,
+        Initialize,
         Collecting,
         Receiving
     }

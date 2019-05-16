@@ -14,6 +14,7 @@ namespace DataCollector
         private SerialState serialState;
         private int countMacsForReceive;
         private List<PhysicalAddress> macList;
+        private string data;
 
         public WiFiTracker(int trackerID)
         {
@@ -24,6 +25,7 @@ namespace DataCollector
             serialState = SerialState.Idle;
             countMacsForReceive = 0;
             macList = new List<PhysicalAddress>();
+            data = "";
         }
 
         public void StartSerialConnection()
@@ -33,61 +35,93 @@ namespace DataCollector
                 Serial = new SerialPortStream(ComPort, 115200, 8, Parity.None, StopBits.One)
                 {
                     StopBits = StopBits.One,
-                    WriteTimeout = 1000,
-                    ReadTimeout = 3000
+                    WriteTimeout = 10000,
+                    ReadTimeout = 10000
                 };
                 Serial.DataReceived += SerialPortDataReceived;
                 Serial.Open();
-                Serial.WriteLine(SerialMessageParser.Encode("DISCOVERY"));
                 //Werkt iets niet 
             }
         }
 
         public List<PhysicalAddress> Collect()
         {
-            //Check if serial isopen
+            macList.Clear();
+            StartSerialConnection();
+            Serial.WriteLine(SerialMessageParser.Encode("DISCOVERY"));
+            serialState = SerialState.Initialize;
+            while (serialState == SerialState.Initialize)
+            {
+                
+            }
+            System.Threading.Thread.Sleep(1000);
             Serial.Write(SerialMessageParser.Encode("COLLECT"));
             serialState = SerialState.Collecting;
             while (serialState == SerialState.Collecting || serialState == SerialState.Receiving)
             {
-                Console.WriteLine(Serial.IsOpen);
+                
             }
+            Serial.Close();
+            Serial.Dispose();
             return macList;
         }
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            string data = Serial.ReadExisting();
-            data = SerialMessageParser.Parse(data);
-            if (data == "HARTBEAT")
-            {
-                Serial.Write(SerialMessageParser.Encode("ACK"));
-            }
-            else if (data.StartsWith("NodeMcu"))
-            {
-                SerialMessageParser.Encode("ACK");
-            }
-
+            data = SerialMessageParser.Parse(Serial.ReadExisting());
+            Console.WriteLine(ComPort);
+            Console.WriteLine(serialState);
             switch (serialState)
             {
                 case SerialState.Idle:
+                    if (data.Contains("HEARTBEAT"))
+                    {
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
+                        Console.WriteLine("Hartbeat ack");
+                    }
+                    break;
+                case SerialState.Initialize:
+                    if (data.StartsWith("NodeMcu"))
+                    {
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
+                        Console.WriteLine("Nodemcu ack");
+                        serialState = SerialState.Idle;
+                    }
+                    else if (data.Contains("HEARTBEAT"))
+                    {
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
+                        Serial.Write(SerialMessageParser.Encode("COLLECT"));
+                        serialState = SerialState.Collecting;
+                    }
                     break;
                 case SerialState.Collecting:
-                    Console.WriteLine("Collecting");
                     if (data.StartsWith("DONE:"))
                     {
+                        Console.WriteLine("gedont");
                         Int32.TryParse(SerialMessageParser.GetValue(data), out countMacsForReceive);
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
                         Serial.Write(SerialMessageParser.Encode("SEND"));
                         serialState = SerialState.Receiving;
                     }
                     break;
                 case SerialState.Receiving:
+                    if (data.Contains("HEARTBEAT"))
+                    {
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
+                        Serial.Write(SerialMessageParser.Encode("SEND"));
+                    }
                     Console.WriteLine("Receiving");
+                    if (data == "ACK")
+                    {
+                        Serial.Write(SerialMessageParser.Encode("ACK"));
+                    }
                     if (data.StartsWith("MAC:"))
                     {
                         try
                         {
-                            macList.Add(PhysicalAddress.Parse(SerialMessageParser.GetValue(data)));
+                            //data = data.Substring(4);
+                            //data = data.Replace(':', '-').ToUpper();
+                            macList.Add(PhysicalAddress.Parse(data.Substring(4).Replace(':', '-').ToUpper()));
                             Serial.Write(SerialMessageParser.Encode("ACK"));
                         }
                         catch (FormatException)
@@ -95,7 +129,7 @@ namespace DataCollector
                             Serial.Write(SerialMessageParser.Encode("NACK"));
                         }
                     }
-                    else if (data == "FINSIH")
+                    else if (data == "FINISH")
                     {
                         //TODO check macList.Count == countMacsForReceive (not in WiFiTracker yet)
                         serialState = SerialState.Idle;
