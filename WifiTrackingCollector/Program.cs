@@ -17,8 +17,7 @@ namespace DataCollector
         {
             ReadConfig();
             train.AutoDiscoverWiFiTrackers();
-            //Console.WriteLine(train.Coupes[0].CoupeNr);
-            SocketConnection s = new SocketConnection(IPAddress.Parse("127.0.0.1"), 4337);
+            SocketConnection s = new SocketConnection(IPAddress.Parse("192.168.1.30"), 4337);
             while (true)
             {
                 switch (socketState)
@@ -46,7 +45,6 @@ namespace DataCollector
                                 socketState = SocketState.Initialize;
                             }
                         }
-                        
                         break;
                     case SocketState.AwaitAck:
                         s.ReceiveMessage();
@@ -60,9 +58,6 @@ namespace DataCollector
                         }
                         break;
                     case SocketState.MainLoop:
-                        //Foreach coupe;
-                        //Foreach wifitracker
-                        //Console.WriteLine("YEET");
                         string x = "";
                         foreach (Coupe coupe in train.Coupes)
                         {
@@ -70,6 +65,7 @@ namespace DataCollector
                             x += "," + coupe.UniqueMacCount;
                         }
                         s.SendMessage("OCCUPATION:" + train.TrainUnitNr + x);
+                        Console.WriteLine("Occupation updated: " + x + " sleep for 30 seconds.");
                         System.Threading.Thread.Sleep(30000);
 
                         //Temp (voor demo?):
@@ -89,7 +85,7 @@ namespace DataCollector
         {
             if (!File.Exists(configFile))
             {
-                Console.WriteLine("Train config file not found!");
+                Console.WriteLine("Train config file not found! Application exit.");
                 Console.WriteLine(configFile);
                 System.Threading.Thread.Sleep(3000);
                 Environment.Exit(0);
@@ -97,16 +93,6 @@ namespace DataCollector
             Console.WriteLine("Reading config file from: " + configFile);
             train = JsonConvert.DeserializeObject<Train>(File.ReadAllText(configFile));
             //TODO server ip + port via config
-        }
-
-        //Temp:
-        private static void ShowCoupeInfo()
-        {
-            Console.WriteLine(train.Coupes[0].WiFiTrackers[0].TrackerID + "" + train.Coupes[0].WiFiTrackers[0].ComPort);
-            Console.WriteLine(train.Coupes[0].WiFiTrackers[1].TrackerID + "" + train.Coupes[0].WiFiTrackers[1].ComPort);
-
-            Console.WriteLine(train.Coupes[1].WiFiTrackers[0].TrackerID + "" + train.Coupes[1].WiFiTrackers[0].ComPort);
-            Console.WriteLine(train.Coupes[1].WiFiTrackers[1].TrackerID + "" + train.Coupes[1].WiFiTrackers[1].ComPort);
         }
     }
 }

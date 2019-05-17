@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net.NetworkInformation;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace DataCollector
 {
@@ -13,12 +14,17 @@ namespace DataCollector
         public List<PhysicalAddress> MacAddresses { get; private set; }
         public int UniqueMacCount { get; private set; }
         public int ChairsOccupied { get; private set; }
+        public I2CChair Chair { get; set; }
 
         public Coupe(int coupeNr, int[] wiFiTrackers)
         {
             CoupeNr = coupeNr;
             WiFiTrackers = new List<WiFiTracker>();
             MacAddresses = new List<PhysicalAddress>();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Chair = new I2CChair(0x12);
+            }
             foreach (int tracker in wiFiTrackers)
             {
                 Console.WriteLine(tracker);
@@ -41,6 +47,11 @@ namespace DataCollector
                 }
             }
             UniqueMacCount = (from x in MacAddresses select x).Distinct().Count();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Chair.ReadChairOccupation();
+            }
+
             //foreach (PhysicalAddress mac in MacAddresses)
             //{
             //    Console.WriteLine(mac.ToString());

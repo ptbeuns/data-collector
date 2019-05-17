@@ -17,6 +17,8 @@ namespace DataCollector
             trackers = new Dictionary<string, int>();
             foreach (string portName in SerialPortStream.GetPortNames())
             {
+                Console.WriteLine("Autodiscover port:");
+                Console.WriteLine(portName);
                 try
                 {
                     autoDiscoverPort = new SerialPortStream(portName, 115200, 8, Parity.None, StopBits.One)
@@ -58,6 +60,8 @@ namespace DataCollector
 
         private void SerialPortAutoDiscover(object sender, SerialDataReceivedEventArgs e)
         {
+            Console.WriteLine("AutoDiscover readline");
+            Console.WriteLine(autoDiscoverPort);
             int nodeid = 0;
             //TODO try catch serial disconnected/notfound
             string data = autoDiscoverPort.ReadExisting();
